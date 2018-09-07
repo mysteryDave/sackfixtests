@@ -1,6 +1,6 @@
 package org.sackfix.tester.tests
 
-import java.time.LocalDateTime
+import java.time.{ZoneId, ZonedDateTime}
 
 import org.sackfix.tester.simplefix.message.{FixTags, MsgTypes, SessMessages}
 
@@ -11,7 +11,7 @@ class T2_t_BadHeaderOrder extends SackFixTestSpec {
   behavior of "Receive Message Standard Header"
 
   def genHeader(sess: SessMessages, seqNum: Int, msgType: String): Array[(Int, String)] = {
-    val now = LocalDateTime.now()
+    val now = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime
     Array((FixTags.BeginString, sess.beginStr),
       (FixTags.SenderCompID, sess.senderCompId),
       (FixTags.TargetCompID, sess.targetCompId),
@@ -35,9 +35,9 @@ class T2_t_BadHeaderOrder extends SackFixTestSpec {
     sess.sendMessageWithNoChange(header)
 
     // check they did NOT up the seq num
-    sess.heartbeat
+    sess.heartbeat()
 
-    sess.logoutSequence
+    sess.logoutSequence()
   }
 
 }

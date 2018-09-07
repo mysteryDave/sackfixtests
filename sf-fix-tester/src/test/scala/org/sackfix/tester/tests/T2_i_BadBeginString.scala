@@ -1,6 +1,6 @@
 package org.sackfix.tester.tests
 
-import java.time.LocalDateTime
+import java.time.{ZoneId, ZonedDateTime}
 
 import org.sackfix.tester.simplefix.message.{FixTags, MsgTypes, SessMessages}
 
@@ -11,12 +11,12 @@ class T2_i_BadBeginString extends SackFixTestSpec {
   behavior of "Receive Message Standard Header"
 
   def genHeader(sess: SessMessages, beginStr: String, msgType: String): Array[(Int, String)] = {
-    val now = LocalDateTime.now()
+    val now = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime
     Array((FixTags.BeginString, beginStr),
       (FixTags.MsgType, msgType),
       (FixTags.SenderCompID, sess.senderCompId),
       (FixTags.TargetCompID, sess.targetCompId),
-      (FixTags.MsgSeqNum, "" + (sess.incSeqNum)),
+      (FixTags.MsgSeqNum, "" + sess.incSeqNum),
       (FixTags.SendingTime, sess.tmFormatter.format(now)))
   }
 

@@ -1,6 +1,6 @@
 package org.sackfix.tester.tests
 
-import java.time.LocalDateTime
+import java.time.{ZoneId, ZonedDateTime}
 
 import org.sackfix.tester.simplefix.message.{FixTags, MsgTypes, SessMessages}
 
@@ -11,12 +11,12 @@ class T2_g_PossDupFlagMissingOrigSendingTime extends SackFixTestSpec {
   behavior of "Receive Message Standard Header"
 
   def genHeader(sess: SessMessages, msgType: String): Array[(Int, String)] = {
-    val now = LocalDateTime.now()
+    val now = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime
     Array((FixTags.BeginString, sess.beginStr),
       (FixTags.MsgType, msgType),
       (FixTags.SenderCompID, sess.senderCompId),
       (FixTags.TargetCompID, sess.targetCompId),
-      (FixTags.MsgSeqNum, "" + (sess.incSeqNum)),
+      (FixTags.MsgSeqNum, "" + sess.incSeqNum),
       (FixTags.PossDupFlag, "Y"),
       (FixTags.SendingTime, sess.tmFormatter.format(now)))
   }
@@ -34,11 +34,11 @@ class T2_g_PossDupFlagMissingOrigSendingTime extends SackFixTestSpec {
     sess.sendMessageWithNoChange(header)
     val msg = sess.readNextMessageOrFail(1000, MsgTypes.Reject, "Reject")
 
-    assert(Some(1) == msg.fldIntVal(FixTags.SessionRejectReason))
+    assert(msg.fldIntVal(FixTags.SessionRejectReason).contains(1))
 
     sess.heartbeat()
 
-    sess.logoutSequence
+    sess.logoutSequence()
   }
 
 

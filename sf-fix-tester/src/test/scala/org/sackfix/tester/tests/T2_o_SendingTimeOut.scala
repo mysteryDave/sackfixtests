@@ -1,6 +1,6 @@
 package org.sackfix.tester.tests
 
-import java.time.LocalDateTime
+import java.time.{ZoneId, ZonedDateTime}
 
 import org.sackfix.tester.simplefix.message.{FixTags, MsgTypes, SessMessages}
 
@@ -11,7 +11,7 @@ class T2_o_SendingTimeOut extends SackFixTestSpec {
   behavior of "Receive Message Standard Header"
 
   def genHeader(sess: SessMessages, msgType: String): Array[(Int, String)] = {
-    val now = LocalDateTime.now()
+    val now = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime
     val timeBefore = now.minusMinutes(3)
     Array((FixTags.BeginString, sess.beginStr),
       (FixTags.MsgType, msgType),
@@ -32,7 +32,7 @@ class T2_o_SendingTimeOut extends SackFixTestSpec {
 
     val msg = sess.readNextMessageOrFail(2000, MsgTypes.Reject, "Reject")
 
-    assert(Some(10) == msg.fldIntVal(FixTags.SessionRejectReason))
+    assert(msg.fldIntVal(FixTags.SessionRejectReason).contains(10))
 
     sess.readNextMessageOrFail(2000, MsgTypes.Logout, "Logout")
     sess.logoutMessage()

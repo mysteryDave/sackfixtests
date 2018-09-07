@@ -1,6 +1,6 @@
 package org.sackfix.tester.tests
 
-import java.time.LocalDateTime
+import java.time.{ZoneId, ZonedDateTime}
 
 import org.sackfix.tester.simplefix.message.{FixTags, MsgTypes, SessMessages}
 
@@ -11,12 +11,12 @@ class T2_k_BadCompId extends SackFixTestSpec {
   behavior of "Receive Message Standard Header"
 
   def genHeader(sess: SessMessages, senderCompId: String, msgType: String): Array[(Int, String)] = {
-    val now = LocalDateTime.now()
+    val now = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime
     Array((FixTags.BeginString, sess.beginStr),
       (FixTags.MsgType, msgType),
       (FixTags.SenderCompID, senderCompId),
       (FixTags.TargetCompID, sess.targetCompId),
-      (FixTags.MsgSeqNum, "" + (sess.incSeqNum)),
+      (FixTags.MsgSeqNum, "" + sess.incSeqNum),
       (FixTags.SendingTime, sess.tmFormatter.format(now)))
   }
 
@@ -33,7 +33,7 @@ class T2_k_BadCompId extends SackFixTestSpec {
     sess.sendMessageWithNoChange(header)
 
     val msg = sess.readNextMessageOrFail(2000, MsgTypes.Reject, "Reject")
-    assert(Some(9) == msg.fldIntVal(FixTags.SessionRejectReason))
+    assert(msg.fldIntVal(FixTags.SessionRejectReason).contains(9))
 
     sess.readNextMessageOrFail(2000, MsgTypes.Logout, "Logout")
 

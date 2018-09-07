@@ -1,6 +1,6 @@
 package org.sackfix.tester.tests
 
-import java.time.LocalDateTime
+import java.time.{ZoneId, ZonedDateTime}
 
 import org.sackfix.tester.simplefix.message.{FixTags, MsgTypes, SessMessages}
 
@@ -11,7 +11,7 @@ class T2_q_InvalidMessageType extends SackFixTestSpec {
   behavior of "Receive Message Standard Header"
 
   def genHeader(sess: SessMessages, msgType: String): Array[(Int, String)] = {
-    val now = LocalDateTime.now()
+    val now = ZonedDateTime.now.withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime
     Array((FixTags.BeginString, sess.beginStr),
       (FixTags.MsgType, "-1"),
       (FixTags.SenderCompID, sess.senderCompId),
@@ -37,12 +37,12 @@ class T2_q_InvalidMessageType extends SackFixTestSpec {
 
     val msg = sess.readNextMessageOrFail(2000, MsgTypes.Reject, "Reject")
 
-    assert(Some(11) == msg.fldIntVal(FixTags.SessionRejectReason))
+    assert(msg.fldIntVal(FixTags.SessionRejectReason).contains(11))
 
     // check they upped the seq num
-    sess.heartbeat
+    sess.heartbeat()
 
-    sess.logoutSequence
+    sess.logoutSequence()
   }
 
 }
